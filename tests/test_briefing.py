@@ -93,3 +93,8 @@ def test_texto_telegram_escapa_html():
     texto = gerar_texto_telegram(briefing)
     assert texto.startswith("<b>Bom dia!")
     assert "A&lt;B" in texto
+
+
+def test_dicas_usam_valores_arredondados():
+    # UV 5,6 aparece como "6" na tela, então a dica de protetor também deve aparecer.
+    assert any("protetor" in d for d in gerar_dicas(_clima(indice_uv=5.6)))

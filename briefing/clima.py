@@ -98,25 +98,30 @@ def buscar_clima(sessao: requests.Session, cidade: str, pais: str | None = None)
 
 def gerar_dicas(clima: Clima) -> list[str]:
     """Regras simples que transformam números da previsão em recomendações práticas."""
+    # As regras usam os mesmos valores arredondados que aparecem na tela; assim nunca
+    # mostramos "UV 6" sem a dica de protetor só porque o valor real era 5,6.
+    chuva = clima.chance_chuva
+    uv = round(clima.indice_uv)
+    minima, maxima = round(clima.minima), round(clima.maxima)
+    vento = round(clima.vento_kmh)
+
     dicas = []
-    if clima.chance_chuva >= 60:
-        dicas.append(f"☂️ Leve guarda-chuva: {clima.chance_chuva}% de chance de chuva.")
-    elif clima.chance_chuva >= 30:
-        dicas.append(f"🌂 Talvez chova ({clima.chance_chuva}%). Um guarda-chuva na mochila não faz mal.")
-    if clima.indice_uv >= 8:
-        dicas.append(f"🧴 UV muito alto ({clima.indice_uv:.0f}): use protetor solar e evite sol entre 10h e 16h.")
-    elif clima.indice_uv >= 6:
-        dicas.append(f"🧴 UV alto ({clima.indice_uv:.0f}): passe protetor solar.")
-    if clima.minima <= 12:
-        dicas.append(f"🧥 Frio: a mínima chega a {clima.minima:.0f}°C. Leve um casaco.")
-    elif clima.maxima - clima.minima >= 10:
-        dicas.append(
-            f"🧣 Grande variação térmica ({clima.minima:.0f}°C → {clima.maxima:.0f}°C): vista-se em camadas."
-        )
-    if clima.maxima >= 30:
-        dicas.append(f"💧 Calor de {clima.maxima:.0f}°C: hidrate-se ao longo do dia.")
-    if clima.vento_kmh >= 40:
-        dicas.append(f"💨 Ventania ({clima.vento_kmh:.0f} km/h): cuidado com objetos soltos.")
+    if chuva >= 60:
+        dicas.append(f"☂️ Leve guarda-chuva: {chuva}% de chance de chuva.")
+    elif chuva >= 30:
+        dicas.append(f"🌂 Talvez chova ({chuva}%). Um guarda-chuva na mochila não faz mal.")
+    if uv >= 8:
+        dicas.append(f"🧴 UV muito alto ({uv}): use protetor solar e evite sol entre 10h e 16h.")
+    elif uv >= 6:
+        dicas.append(f"🧴 UV alto ({uv}): passe protetor solar.")
+    if minima <= 12:
+        dicas.append(f"🧥 Frio: a mínima chega a {minima}°C. Leve um casaco.")
+    elif maxima - minima >= 10:
+        dicas.append(f"🧣 Grande variação térmica ({minima}°C → {maxima}°C): vista-se em camadas.")
+    if maxima >= 30:
+        dicas.append(f"💧 Calor de {maxima}°C: hidrate-se ao longo do dia.")
+    if vento >= 40:
+        dicas.append(f"💨 Ventania ({vento} km/h): cuidado com objetos soltos.")
     if not dicas:
         dicas.append("😎 Tempo tranquilo hoje. Aproveite o dia!")
     return dicas

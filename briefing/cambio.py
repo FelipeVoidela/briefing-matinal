@@ -35,5 +35,8 @@ def parse_cotacoes(dados: dict, pares: list[str]) -> list[Cotacao]:
 
 def buscar_cotacoes(sessao: requests.Session, pares: list[str]) -> list[Cotacao]:
     resposta = sessao.get(URL_COTACOES.format(pares=",".join(pares)))
+    # A AwesomeAPI responde 404 quando algum dos pares não existe.
+    if resposta.status_code == 404:
+        raise ValueError(f"par de moedas inválido em {', '.join(pares)} (formato esperado: USD-BRL).")
     resposta.raise_for_status()
     return parse_cotacoes(resposta.json(), pares)

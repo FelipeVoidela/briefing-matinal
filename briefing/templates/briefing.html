@@ -36,6 +36,7 @@
     table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
     th, td { padding: 10px 6px; text-align: right; border-bottom: 1px solid var(--borda); }
     th:first-child, td:first-child { text-align: left; }
+    td:not(:first-child) { white-space: nowrap; }  /* não separar "R$" do valor nem "▲" do percentual */
     th { font-size: 13px; color: var(--suave); font-weight: 500; }
     tr:last-child td { border-bottom: 0; }
     .alta { color: var(--alta); } .baixa { color: var(--baixa); }
