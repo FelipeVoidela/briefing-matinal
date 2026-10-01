@@ -1,0 +1,9 @@
+requests>=2.31          # consumo das APIs REST (Open-Meteo, AwesomeAPI, BrasilAPI, Telegram)
+beautifulsoup4>=4.12    # web scraping do feed RSS de notícias
+lxml>=5.0               # parser XML usado pelo BeautifulSoup
+rich>=13.7              # saída colorida no terminal
+Jinja2>=3.1             # template da página HTML
+python-dotenv>=1.0      # leitura do arquivo .env
+schedule>=1.2           # agendamento diário
+
+pytest>=8.0             # testes automatizados
