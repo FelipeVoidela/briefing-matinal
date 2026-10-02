@@ -21,6 +21,7 @@ guarda-chuva”).
 | [BrasilAPI](https://brasilapi.com.br/) | API REST (`requests`) | feriados nacionais |
 | [g1 RSS](https://g1.globo.com/rss/g1/) | Web scraping (`BeautifulSoup` + `lxml`) | manchetes e resumos |
 | [Telegram Bot API](https://core.telegram.org/bots/api) | API REST, envio via `POST` | entrega do briefing no celular (opcional) |
+| `urllib3` | — | retentativas automáticas em falhas de rede |
 | `rich` | — | interface colorida no terminal |
 | `Jinja2` | — | template da página HTML |
 | `schedule` | — | execução diária agendada |
@@ -29,6 +30,8 @@ guarda-chuva”).
 Nenhuma das APIs exige cadastro ou chave: o projeto funciona assim que é clonado.
 
 ## Como executar
+
+Requer **Python 3.10+**.
 
 ```bash
 python -m venv .venv
@@ -72,9 +75,9 @@ briefing/
 ├── feriados.py         BrasilAPI
 ├── notificador.py      envio via Telegram Bot API
 ├── relatorio.py        saída no terminal (rich), HTML (Jinja2) e texto do Telegram
+├── template_html.py    template Jinja2 da página HTML
 ├── formatacao.py       números e moedas no padrão brasileiro
-├── modelos.py          dataclasses compartilhadas
-└── templates/briefing.html
+└── modelos.py          dataclasses compartilhadas
 tests/                  testes unitários (sem acesso à rede)
 ```
 
@@ -84,7 +87,9 @@ Decisões técnicas:
   é o da fonte mais lenta, e não a soma de todas.
 - **Tolerância a falhas**: se uma fonte cair (ou a cidade não existir), o erro aparece como aviso e o restante do
   briefing continua sendo gerado.
-- **Resiliência de rede**: timeout padrão e até 3 retentativas automáticas em erros `429/5xx`.
+- **Resiliência de rede**: timeout padrão e até 3 retentativas automáticas em erros `429/5xx`; sem internet,
+  o usuário vê uma mensagem clara em vez de um erro técnico.
+- **Validação de entrada**: horários, quantidades e moedas inválidos geram mensagens de ajuda, não tracebacks.
 - **Separação entre busca e interpretação** (`buscar_*` × `parse_*`): a lógica pode ser testada com respostas de exemplo,
   sem internet.
 

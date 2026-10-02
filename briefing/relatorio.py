@@ -5,7 +5,7 @@ from __future__ import annotations
 from html import escape
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
@@ -13,13 +13,10 @@ from rich.text import Text
 
 from .formatacao import descrever_contagem, formatar_moeda, formatar_numero, formatar_variacao
 from .modelos import Briefing
+from .template_html import TEMPLATE_HTML
 
-PASTA_TEMPLATES = Path(__file__).parent / "templates"
-
-_jinja = Environment(
-    loader=FileSystemLoader(PASTA_TEMPLATES),
-    autoescape=select_autoescape(["html"]),
-)
+# autoescape=True: títulos e resumos vêm de sites externos e não podem injetar HTML na página.
+_jinja = Environment(autoescape=True)
 _jinja.filters.update(
     moeda=formatar_moeda,
     variacao=formatar_variacao,
@@ -62,9 +59,9 @@ def exibir_no_terminal(briefing: Briefing, console: Console | None = None) -> No
     if briefing.cotacoes:
         tabela = Table(title="💰 Câmbio", title_justify="left", expand=True)
         tabela.add_column("Moeda")
-        tabela.add_column("Cotação", justify="right")
-        tabela.add_column("Variação", justify="right")
-        tabela.add_column("Mín / Máx do dia", justify="right")
+        tabela.add_column("Cotação", justify="right", no_wrap=True)
+        tabela.add_column("Variação", justify="right", no_wrap=True)
+        tabela.add_column("Mín / Máx do dia", justify="right", no_wrap=True)
         for cot in briefing.cotacoes:
             cor = "green" if cot.variacao_pct > 0 else "red" if cot.variacao_pct < 0 else "white"
             tabela.add_row(
@@ -104,7 +101,7 @@ def gerar_html(briefing: Briefing, pasta_saida: Path) -> Path:
     """Renderiza o template e salva em saida/briefing_AAAA-MM-DD_HHMM.html."""
     pasta_saida.mkdir(parents=True, exist_ok=True)
     caminho = pasta_saida / f"briefing_{briefing.gerado_em:%Y-%m-%d_%H%M}.html"
-    html = _jinja.get_template("briefing.html").render(b=briefing)
+    html = _jinja.from_string(TEMPLATE_HTML).render(b=briefing)
     caminho.write_text(html, encoding="utf-8")
     return caminho
 

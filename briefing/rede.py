@@ -30,3 +30,14 @@ def criar_sessao() -> requests.Session:
     sessao.mount("http://", adaptador)
     sessao.headers["User-Agent"] = "BriefingMatinal/1.0 (projeto academico)"
     return sessao
+
+
+def descrever_erro(erro: Exception) -> str:
+    """Traduz exceções de rede em mensagens curtas para o usuário (o detalhe técnico vai para o log -v)."""
+    if isinstance(erro, requests.Timeout):
+        return "o site demorou demais para responder."
+    if isinstance(erro, requests.ConnectionError):
+        return "sem conexão com a internet ou o site está fora do ar."
+    if isinstance(erro, requests.HTTPError) and erro.response is not None:
+        return f"o site respondeu com erro HTTP {erro.response.status_code}."
+    return str(erro)

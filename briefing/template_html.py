@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+"""Template Jinja2 da página HTML do briefing.
+
+Fica em um módulo Python (e não em um arquivo .html) para que o projeto seja 100% Python;
+o Jinja2 preenche as variáveis e o filtro de escape protege contra HTML vindo das fontes externas.
+"""
+
+TEMPLATE_HTML = r'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -98,7 +104,8 @@
         <tr>
           <td>{{ cot.nome }} <small>({{ cot.codigo }})</small></td>
           <td>{{ cot.valor | moeda }}</td>
-          <td class="{{ 'alta' if cot.variacao_pct > 0 else 'baixa' if cot.variacao_pct < 0 else '' }}">{{ cot.variacao_pct | variacao }}</td>
+          {% set classe = 'alta' if cot.variacao_pct > 0 else 'baixa' if cot.variacao_pct < 0 else '' %}
+          <td class="{{ classe }}">{{ cot.variacao_pct | variacao }}</td>
           <td>{{ cot.minima | moeda }} / {{ cot.maxima | moeda }}</td>
         </tr>
       {% endfor %}
@@ -124,7 +131,10 @@
   {% if b.proximo_feriado %}{% set f = b.proximo_feriado %}
   <section>
     <h2>Próximo feriado</h2>
-    <div class="feriado">🎉 <strong>{{ f.nome }}</strong> · {{ f.data.strftime('%d/%m') }} ({{ f.dia_semana }}) · {{ f.dias_restantes | contagem }}</div>
+    <div class="feriado">
+      🎉 <strong>{{ f.nome }}</strong> · {{ f.data.strftime('%d/%m') }} ({{ f.dia_semana }})
+      · {{ f.dias_restantes | contagem }}
+    </div>
   </section>
   {% endif %}
 
@@ -136,3 +146,4 @@
 </main>
 </body>
 </html>
+'''

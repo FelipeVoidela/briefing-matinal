@@ -27,18 +27,41 @@ class Configuracao:
         return bool(self.telegram_token and self.telegram_chat_id)
 
 
+def inteiro_positivo(valor: str) -> int:
+    """Converte texto em inteiro >= 1, com mensagem clara em caso de erro."""
+    try:
+        numero = int(valor)
+    except ValueError:
+        raise ValueError(f"'{valor}' não é um número inteiro.") from None
+    if numero < 1:
+        raise ValueError(f"o valor deve ser maior que zero (recebido: {numero}).")
+    return numero
+
+
+def separar_moedas(texto: str) -> list[str]:
+    """'usd-brl, eur-brl,' -> ['USD-BRL', 'EUR-BRL'] (ignora espaços e itens vazios)."""
+    moedas = [m.strip().upper() for m in texto.split(",") if m.strip()]
+    if not moedas:
+        raise ValueError("informe ao menos um par de moedas, ex.: USD-BRL.")
+    return moedas
+
+
 def carregar_configuracao() -> Configuracao:
     """Lê o .env (se existir) e monta a configuração, usando valores padrão quando ausentes."""
     load_dotenv(RAIZ_PROJETO / ".env")
     padrao = Configuracao()
 
     moedas = os.getenv("MOEDAS")
-    return Configuracao(
-        cidade=os.getenv("CIDADE", padrao.cidade),
-        pais=os.getenv("PAIS", padrao.pais),
-        moedas=[m.strip().upper() for m in moedas.split(",")] if moedas else padrao.moedas,
-        feed_noticias=os.getenv("FEED_NOTICIAS", padrao.feed_noticias),
-        qtd_noticias=int(os.getenv("QTD_NOTICIAS", padrao.qtd_noticias)),
-        telegram_token=os.getenv("TELEGRAM_TOKEN") or None,
-        telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID") or None,
-    )
+    qtd_noticias = os.getenv("QTD_NOTICIAS")
+    try:
+        return Configuracao(
+            cidade=os.getenv("CIDADE") or padrao.cidade,
+            pais=os.getenv("PAIS", padrao.pais),
+            moedas=separar_moedas(moedas) if moedas else padrao.moedas,
+            feed_noticias=os.getenv("FEED_NOTICIAS") or padrao.feed_noticias,
+            qtd_noticias=inteiro_positivo(qtd_noticias) if qtd_noticias else padrao.qtd_noticias,
+            telegram_token=os.getenv("TELEGRAM_TOKEN") or None,
+            telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID") or None,
+        )
+    except ValueError as erro:
+        raise ValueError(f"Configuração inválida no .env: {erro}") from None

@@ -22,12 +22,12 @@ from rich.console import Console
 
 from briefing.cambio import buscar_cotacoes
 from briefing.clima import buscar_clima, gerar_dicas
-from briefing.config import Configuracao, carregar_configuracao
+from briefing.config import Configuracao, carregar_configuracao, inteiro_positivo, separar_moedas
 from briefing.feriados import buscar_proximo_feriado
 from briefing.modelos import Briefing
 from briefing.noticias import buscar_noticias
 from briefing.notificador import enviar_telegram
-from briefing.rede import criar_sessao
+from briefing.rede import criar_sessao, descrever_erro
 from briefing.relatorio import exibir_no_terminal, gerar_html, gerar_texto_telegram
 
 console = Console()
@@ -57,7 +57,7 @@ def coletar_briefing(config: Configuracao) -> Briefing:
             resultados[nome] = futuro.result()
         except Exception as erro:  # noqa: BLE001 — queremos registrar qualquer falha da fonte
             log.debug("Falha ao buscar %s", nome, exc_info=True)
-            briefing.erros[nome] = str(erro)
+            briefing.erros[nome] = descrever_erro(erro)
 
     briefing.clima = resultados.get("o clima")
     briefing.cotacoes = resultados.get("as cotações", [])
@@ -91,11 +91,20 @@ def executar(config: Configuracao, args: argparse.Namespace) -> None:
                             gerar_texto_telegram(briefing))
             console.print("📨 Briefing enviado para o Telegram!")
         except Exception as erro:  # noqa: BLE001
-            console.print(f"[red]Falha ao enviar para o Telegram: {erro}[/red]")
+            console.print(f"[red]Falha ao enviar para o Telegram: {descrever_erro(erro)}[/red]")
+
+
+def _execucao_agendada(config: Configuracao, args: argparse.Namespace) -> None:
+    # Um erro inesperado em um dia não pode derrubar o agendamento dos dias seguintes.
+    try:
+        executar(config, args)
+    except Exception:  # noqa: BLE001
+        console.print_exception()
+        console.print("[red]A execução falhou, mas o agendamento continua ativo.[/red]")
 
 
 def agendar(horario: str, config: Configuracao, args: argparse.Namespace) -> None:
-    schedule.every().day.at(horario).do(executar, config, args)
+    schedule.every().day.at(horario).do(_execucao_agendada, config, args)
     console.print(f"⏰ Briefing agendado para todos os dias às [bold]{horario}[/bold]. Ctrl+C para sair.")
     try:
         while True:
@@ -105,15 +114,36 @@ def agendar(horario: str, config: Configuracao, args: argparse.Namespace) -> Non
         console.print("\nAgendamento encerrado. Até amanhã! 👋")
 
 
+def _argumento(conversor):
+    """Adapta um validador para o argparse, que mostra a mensagem de erro em vez de um traceback."""
+    def converter(valor: str):
+        try:
+            return conversor(valor)
+        except ValueError as erro:
+            raise argparse.ArgumentTypeError(str(erro)) from None
+    converter.__name__ = conversor.__name__
+    return converter
+
+
+def validar_horario(valor: str) -> str:
+    """Aceita "7:00" ou "07:00" e devolve sempre no formato HH:MM exigido pelo schedule."""
+    try:
+        return datetime.strptime(valor.strip(), "%H:%M").strftime("%H:%M")
+    except ValueError:
+        raise ValueError(f"horário inválido '{valor}'. Use o formato HH:MM, ex.: 07:00.") from None
+
+
 def criar_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Gera um briefing diário com clima, câmbio, notícias e feriados.")
     parser.add_argument("--cidade", help="cidade para a previsão do tempo (padrão: valor do .env ou São Paulo)")
-    parser.add_argument("--moedas", help="pares de moedas separados por vírgula, ex.: USD-BRL,EUR-BRL")
-    parser.add_argument("--noticias", type=int, metavar="N", help="quantidade de manchetes")
+    parser.add_argument("--moedas", type=_argumento(separar_moedas),
+                        help="pares de moedas separados por vírgula, ex.: USD-BRL,EUR-BRL")
+    parser.add_argument("--noticias", type=_argumento(inteiro_positivo), metavar="N", help="quantidade de manchetes")
     parser.add_argument("--html", action="store_true", help="salva o briefing como página HTML em saida/")
     parser.add_argument("--abrir", action="store_true", help="gera a página HTML e abre no navegador")
     parser.add_argument("--telegram", action="store_true", help="envia o briefing para o Telegram")
-    parser.add_argument("--agendar", metavar="HH:MM", help="executa todos os dias no horário informado")
+    parser.add_argument("--agendar", type=_argumento(validar_horario), metavar="HH:MM",
+                        help="executa todos os dias no horário informado")
     parser.add_argument("-v", "--verbose", action="store_true", help="mostra logs detalhados")
     return parser
 
@@ -123,17 +153,21 @@ def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    args = criar_parser().parse_args()
+    parser = criar_parser()
+    args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING,
                         format="%(levelname)s %(name)s: %(message)s")
 
     # Argumentos da linha de comando têm prioridade sobre o .env.
-    config = carregar_configuracao()
+    try:
+        config = carregar_configuracao()
+    except ValueError as erro:
+        parser.error(str(erro))
     if args.cidade:
         config.cidade = args.cidade
     if args.moedas:
-        config.moedas = [m.strip().upper() for m in args.moedas.split(",")]
-    if args.noticias:
+        config.moedas = args.moedas
+    if args.noticias is not None:
         config.qtd_noticias = args.noticias
 
     if args.agendar:

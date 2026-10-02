@@ -98,3 +98,54 @@ def test_texto_telegram_escapa_html():
 def test_dicas_usam_valores_arredondados():
     # UV 5,6 aparece como "6" na tela, então a dica de protetor também deve aparecer.
     assert any("protetor" in d for d in gerar_dicas(_clima(indice_uv=5.6)))
+
+
+def test_validacoes_de_entrada():
+    import pytest
+
+    from briefing.config import inteiro_positivo, separar_moedas
+    from main import validar_horario
+
+    assert inteiro_positivo("3") == 3
+    for invalido in ("0", "-2", "abc"):
+        with pytest.raises(ValueError):
+            inteiro_positivo(invalido)
+    assert separar_moedas(" usd-brl, ,eur-brl ") == ["USD-BRL", "EUR-BRL"]
+    with pytest.raises(ValueError):
+        separar_moedas(" , ")
+    assert validar_horario("7:05") == "07:05"
+    for invalido in ("25:99", "7h"):
+        with pytest.raises(ValueError):
+            validar_horario(invalido)
+
+
+def test_mensagem_longa_do_telegram_e_dividida_entre_linhas():
+    from briefing.notificador import dividir_mensagem
+
+    linhas = [f'<a href="https://x.com/{i}">Notícia {i}</a>' for i in range(300)]
+    partes = dividir_mensagem("\n".join(linhas), limite=500)
+    assert len(partes) > 1
+    assert all(len(p) <= 500 for p in partes)
+    # Nenhuma tag fica aberta: cada parte tem tantos <a como </a>.
+    assert all(p.count("<a ") == p.count("</a>") for p in partes)
+    assert "\n".join(partes) == "\n".join(linhas)
+
+
+def test_html_escapa_conteudo_externo(tmp_path):
+    from briefing.modelos import Noticia
+    from briefing.relatorio import gerar_html
+
+    briefing = Briefing(gerado_em=datetime(2026, 10, 1, 7, 0),
+                        noticias=[Noticia(titulo="<script>alert(1)</script>", link="https://x.com")])
+    html = gerar_html(briefing, tmp_path).read_text(encoding="utf-8")
+    assert "<script>alert" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_erros_de_rede_viram_mensagens_amigaveis():
+    import requests
+
+    from briefing.rede import descrever_erro
+
+    assert "internet" in descrever_erro(requests.ConnectionError("detalhe técnico"))
+    assert "demorou" in descrever_erro(requests.Timeout())

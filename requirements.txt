@@ -1,5 +1,6 @@
 requests>=2.31          # consumo das APIs REST (Open-Meteo, AwesomeAPI, BrasilAPI, Telegram)
 beautifulsoup4>=4.12    # web scraping do feed RSS de notícias
+urllib3>=2.0            # retentativas automáticas (Retry) nas requisições HTTP
 lxml>=5.0               # parser XML usado pelo BeautifulSoup
 rich>=13.7              # saída colorida no terminal
 Jinja2>=3.1             # template da página HTML
