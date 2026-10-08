@@ -68,9 +68,12 @@ def exibir_no_terminal(briefing: Briefing, console: Console | None = None) -> No
                 f"{cot.nome} ({cot.codigo})",
                 formatar_moeda(cot.valor),
                 Text(formatar_variacao(cot.variacao_pct), style=cor),
-                f"{formatar_moeda(cot.minima)} / {formatar_moeda(cot.maxima)}",
+                f"{formatar_moeda(cot.minima)} / {formatar_moeda(cot.maxima)}" if cot.maxima is not None else "—",
             )
         console.print(tabela)
+        fontes = sorted({cot.fonte for cot in briefing.cotacoes} - {"AwesomeAPI"})
+        if fontes:
+            console.print(f"[dim]Fonte principal indisponível; cotações de: {', '.join(fontes)}.[/dim]")
 
     if briefing.noticias:
         # O estilo "link" torna cada título clicável em terminais compatíveis.

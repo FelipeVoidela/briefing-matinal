@@ -106,11 +106,15 @@ TEMPLATE_HTML = r'''<!DOCTYPE html>
           <td>{{ cot.valor | moeda }}</td>
           {% set classe = 'alta' if cot.variacao_pct > 0 else 'baixa' if cot.variacao_pct < 0 else '' %}
           <td class="{{ classe }}">{{ cot.variacao_pct | variacao }}</td>
-          <td>{{ cot.minima | moeda }} / {{ cot.maxima | moeda }}</td>
+          <td>
+            {%- if cot.maxima is not none %}{{ cot.minima | moeda }} / {{ cot.maxima | moeda }}{% else %}—{% endif -%}
+          </td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
+    {% set fontes = b.cotacoes | map(attribute='fonte') | reject('equalto', 'AwesomeAPI') | unique | list %}
+    {% if fontes %}<p class="aviso">Fonte principal indisponível; cotações de: {{ fontes | join(', ') }}.</p>{% endif %}
   </section>
   {% endif %}
 

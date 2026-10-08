@@ -18,11 +18,13 @@ class _SessaoComTimeout(requests.Session):
 def criar_sessao() -> requests.Session:
     sessao = _SessaoComTimeout()
 
-    # Até 3 novas tentativas com espera exponencial (0,5s, 1s, 2s) em erros transitórios.
+    # Até 3 novas tentativas com espera exponencial (0,5s, 1s, 2s) em erros transitórios do servidor.
+    # O 429 (limite de requisições) fica de fora: repetir logo em seguida não resolve e só atrasaria
+    # a troca para a fonte reserva.
     retentativas = Retry(
         total=3,
         backoff_factor=0.5,
-        status_forcelist=(429, 500, 502, 503, 504),
+        status_forcelist=(500, 502, 503, 504),
         allowed_methods=("GET", "POST"),
     )
     adaptador = HTTPAdapter(max_retries=retentativas)
@@ -34,6 +36,10 @@ def criar_sessao() -> requests.Session:
 
 def descrever_erro(erro: Exception) -> str:
     """Traduz exceções de rede em mensagens curtas para o usuário (o detalhe técnico vai para o log -v)."""
+    if isinstance(erro, requests.exceptions.RetryError):
+        return "o site está sobrecarregado; tente novamente em alguns minutos."
+    if isinstance(erro, requests.HTTPError) and erro.response is not None and erro.response.status_code == 429:
+        return "o site atingiu o limite de requisições; tente novamente em alguns minutos."
     if isinstance(erro, requests.Timeout):
         return "o site demorou demais para responder."
     if isinstance(erro, requests.ConnectionError):

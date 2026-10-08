@@ -20,9 +20,9 @@ MOEDAS_DISPONIVEIS = {
     "USD-BRL": "🇺🇸 Dólar americano",
     "EUR-BRL": "🇪🇺 Euro",
     "GBP-BRL": "🇬🇧 Libra esterlina",
-    "ARS-BRL": "🇦🇷 Peso argentino",
     "JPY-BRL": "🇯🇵 Iene japonês",
     "CAD-BRL": "🇨🇦 Dólar canadense",
+    "CHF-BRL": "🇨🇭 Franco suíço",
     "BTC-BRL": "₿ Bitcoin",
     "ETH-BRL": "Ξ Ethereum",
 }
@@ -111,8 +111,12 @@ if briefing.cotacoes:
             f"{cot.nome} ({cot.codigo})",
             formatar_moeda(cot.valor),
             f"{formatar_numero(cot.variacao_pct)}%",
-            help=f"Mínima {formatar_moeda(cot.minima)} · Máxima {formatar_moeda(cot.maxima)}",
+            help=(f"Mínima {formatar_moeda(cot.minima)} · Máxima {formatar_moeda(cot.maxima)}"
+                  if cot.maxima is not None else f"Fonte: {cot.fonte}"),
         )
+    fontes = sorted({cot.fonte for cot in briefing.cotacoes} - {"AwesomeAPI"})
+    if fontes:
+        st.caption(f"A fonte principal (AwesomeAPI) não respondeu; cotações de: {', '.join(fontes)}.")
 
 # --------------------------------------------------------------------------- notícias e feriado
 

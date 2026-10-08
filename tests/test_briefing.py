@@ -159,3 +159,45 @@ def test_feed_ignora_noticias_repetidas():
     </channel></rss>"""
     # Mesmo com limite 2, a repetida é pulada e a próxima notícia diferente entra no lugar.
     assert [n.titulo for n in parse_feed(xml, limite=2)] == ["Quina hoje", "Outra"]
+
+
+def test_reserva_frankfurter_inverte_taxa_e_calcula_variacao():
+    from briefing.cambio import FONTE_BCE, parse_frankfurter
+
+    dados = {"rates": {"2026-10-07": {"USD": 0.20}, "2026-10-08": {"USD": 0.19}}}
+    [usd] = parse_frankfurter(dados, ["USD", "ARS"])
+    assert round(usd.valor, 4) == round(1 / 0.19, 4)       # 1 real = 0,19 dólar -> 1 dólar = R$ 5,26
+    assert round(usd.variacao_pct, 2) == 5.26              # dólar subiu de R$ 5,00 para R$ 5,26
+    assert usd.maxima is None and usd.fonte == FONTE_BCE
+
+
+def test_reserva_usada_quando_awesomeapi_falha():
+    import requests
+
+    from briefing import cambio
+
+    class RespostaFalsa:
+        def __init__(self, status, dados=None):
+            self.status_code, self._dados = status, dados
+
+        def json(self):
+            return self._dados
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                erro = requests.HTTPError(f"{self.status_code}")
+                erro.response = self
+                raise erro
+
+    class SessaoFalsa:
+        def get(self, url, params=None):
+            if "awesomeapi" in url:
+                return RespostaFalsa(429)
+            if "frankfurter" in url:
+                return RespostaFalsa(200, {"rates": {"2026-10-07": {"USD": 0.2}, "2026-10-08": {"USD": 0.2}}})
+            return RespostaFalsa(200, {"bitcoin": {"brl": 400000, "brl_24h_change": -1.5}})
+
+    cotacoes = cambio.buscar_cotacoes(SessaoFalsa(), ["BTC-BRL", "USD-BRL"], date(2026, 10, 8))
+    assert [c.codigo for c in cotacoes] == ["BTC", "USD"]   # mesma ordem pedida
+    assert cotacoes[0].valor == 400000 and cotacoes[0].variacao_pct == -1.5
+    assert cotacoes[1].valor == 5.0 and cotacoes[1].variacao_pct == 0.0

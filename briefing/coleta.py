@@ -27,7 +27,7 @@ def coletar_briefing(config: Configuracao) -> Briefing:
     agora = datetime.now(FUSO_HORARIO).replace(tzinfo=None)
     tarefas = {
         "o clima": lambda s: buscar_clima(s, config.cidade, config.pais),
-        "as cotações": lambda s: buscar_cotacoes(s, config.moedas),
+        "as cotações": lambda s: buscar_cotacoes(s, config.moedas, agora.date()),
         "as notícias": lambda s: buscar_noticias(s, config.feed_noticias, config.qtd_noticias),
         "o próximo feriado": lambda s: buscar_proximo_feriado(s, agora.date()),
     }

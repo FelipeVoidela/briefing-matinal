@@ -30,9 +30,11 @@ class Cotacao:
     nome: str
     valor: float
     variacao_pct: float
-    maxima: float
-    minima: float
     atualizado_em: datetime
+    # Mínima e máxima do dia só existem na fonte principal; as fontes reserva não as informam.
+    maxima: float | None = None
+    minima: float | None = None
+    fonte: str = "AwesomeAPI"
 
 
 @dataclass
