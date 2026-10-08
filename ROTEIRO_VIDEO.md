@@ -8,7 +8,7 @@
 >   segundos para acordar e você não perde tempo no vídeo.
 > - Publique no YouTube como **Não listado**.
 >
-> O texto narrado tem ~600 palavras (≈ 4 min em ritmo natural). Os trechos marcados como *(opcional)* podem ser
+> O texto narrado tem ~530 palavras (≈ 3min30 de fala, ~4min30 com as demonstrações). Os trechos marcados como *(opcional)* podem ser
 > cortados se o vídeo passar de 5 minutos.
 
 ---
