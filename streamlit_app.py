@@ -72,6 +72,10 @@ if not moedas:
 with st.spinner("Consultando APIs e lendo notícias..."):
     briefing = obter_briefing(cidade, tuple(moedas), qtd_noticias)
 
+# Resultados com falha não ficam 10 minutos em cache: a próxima visita tenta as fontes de novo.
+if briefing.erros:
+    obter_briefing.clear(cidade, tuple(moedas), qtd_noticias)
+
 # --------------------------------------------------------------------------- cabeçalho
 
 st.title(f"{briefing.saudacao}! ☕")
