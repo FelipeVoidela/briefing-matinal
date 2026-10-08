@@ -24,11 +24,20 @@ def _limpar_resumo(descricao_html: str) -> str:
 def parse_feed(xml: bytes | str, limite: int) -> list[Noticia]:
     sopa = BeautifulSoup(xml, "xml")
     noticias = []
-    for item in sopa.find_all("item")[:limite]:
+    vistos = set()
+    for item in sopa.find_all("item"):
+        if len(noticias) >= limite:
+            break
         titulo = item.find("title")
         link = item.find("link")
         if not titulo or not link:
             continue
+
+        # O feed às vezes repete a mesma matéria (mesmo título, links diferentes); mostramos só uma vez.
+        chave = titulo.get_text(strip=True).casefold()
+        if chave in vistos:
+            continue
+        vistos.add(chave)
 
         descricao = item.find("description")
         data = item.find("pubDate")

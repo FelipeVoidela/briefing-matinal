@@ -149,3 +149,13 @@ def test_erros_de_rede_viram_mensagens_amigaveis():
 
     assert "internet" in descrever_erro(requests.ConnectionError("detalhe técnico"))
     assert "demorou" in descrever_erro(requests.Timeout())
+
+
+def test_feed_ignora_noticias_repetidas():
+    xml = """<rss><channel>
+      <item><title>Quina hoje</title><link>https://exemplo.com/a</link></item>
+      <item><title>Quina hoje</title><link>https://exemplo.com/b</link></item>
+      <item><title>Outra</title><link>https://exemplo.com/c</link></item>
+    </channel></rss>"""
+    # Mesmo com limite 2, a repetida é pulada e a próxima notícia diferente entra no lugar.
+    assert [n.titulo for n in parse_feed(xml, limite=2)] == ["Quina hoje", "Outra"]
