@@ -60,7 +60,7 @@ with st.sidebar:
     if st.button("🔄 Atualizar agora", width="stretch"):
         obter_briefing.clear()
     st.caption(
-        "Fontes: Open-Meteo, AwesomeAPI, BrasilAPI e g1 (RSS). "
+        "Fontes: Open-Meteo, AwesomeAPI (reserva: BCE e CoinGecko), BrasilAPI e g1 (RSS). "
         "Os dados ficam em cache por 10 minutos."
     )
     st.caption("[Código no GitHub](https://github.com/FelipeVoidela/briefing-matinal)")
