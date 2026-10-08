@@ -97,12 +97,15 @@ def exibir_no_terminal(briefing: Briefing, console: Console | None = None) -> No
 
 # --------------------------------------------------------------------------- HTML
 
+def renderizar_html(briefing: Briefing) -> str:
+    return _jinja.from_string(TEMPLATE_HTML).render(b=briefing)
+
+
 def gerar_html(briefing: Briefing, pasta_saida: Path) -> Path:
     """Renderiza o template e salva em saida/briefing_AAAA-MM-DD_HHMM.html."""
     pasta_saida.mkdir(parents=True, exist_ok=True)
     caminho = pasta_saida / f"briefing_{briefing.gerado_em:%Y-%m-%d_%H%M}.html"
-    html = _jinja.from_string(TEMPLATE_HTML).render(b=briefing)
-    caminho.write_text(html, encoding="utf-8")
+    caminho.write_text(renderizar_html(briefing), encoding="utf-8")
     return caminho
 
 

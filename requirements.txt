@@ -6,5 +6,7 @@ rich>=13.7              # saída colorida no terminal
 Jinja2>=3.1             # template da página HTML
 python-dotenv>=1.0      # leitura do arquivo .env
 schedule>=1.2           # agendamento diário
+streamlit>=1.38         # versão web (Streamlit Community Cloud)
+tzdata                  # fuso horário America/Sao_Paulo (necessário no Windows)
 
 pytest>=8.0             # testes automatizados
