@@ -14,6 +14,16 @@ agendada, todo dia no mesmo horário.
 | **Web** (Streamlit) | abra o link acima | escolha cidade, moedas e nº de manchetes; baixe o briefing em HTML |
 | **Linha de comando** | `python main.py` | tudo da versão web + envio para o Telegram e agendamento diário |
 
+## Integrantes
+
+| Nome | RM |
+|---|---|
+| Açussena Macedo Mautone | 552568 |
+| Felipe Heilmann Marques | 551026 |
+| Felipe Voidela Toledo | 98595 |
+| Carlos Eduardo Caramante Ribeiro | 552159 |
+| Ian Cancian Nachtergaele | 98387 |
+
 ## O problema
 
 Toda manhã a gente abre 4 ou 5 sites/apps diferentes para saber se vai chover, quanto está o dólar, o que está
